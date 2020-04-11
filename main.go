@@ -5,10 +5,12 @@ import (
   "github.com/bwmarrin/discordgo"
   "errors"
   "os"
+  scraper "Discord-Bot-CP-Spider/scraper"
 )
 
 var (
   token string
+  contests []scraper.Contest
 )
 
 func getToken() (string, error) {
@@ -20,6 +22,7 @@ func getToken() (string, error) {
 }
 
 func main() {
+  contests = scraper.Scrape()
   token, err := getToken()
   if err != nil {
     fmt.Println(err.Error())
@@ -34,7 +37,7 @@ func main() {
 
   dg.AddHandler(messageHandler)
   err = dg.Open()
-
+  defer dg.Close()
   if err != nil {
     fmt.Println(err.Error())
     return
@@ -43,13 +46,20 @@ func main() {
   sc := make(chan os.Signal, 1)
   <-sc
 
-  dg.Close()
 }
 
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
   if m.Author.ID == s.State.User.ID {
     return
   }
-
-  s.ChannelMessageSend(m.ChannelID, m.Content)
+  if m.Content == "!schedule" {
+    message := ""
+    for _, body := range contests {
+      message = "(" + body.Status + ") " + body.Title + " " +  body.Link + "\n"
+      _, err := s.ChannelMessageSend(m.ChannelID, message)
+      if err != nil {
+        fmt.Println(err.Error())
+      }
+    }
+  }
 }
