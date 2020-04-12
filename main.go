@@ -1,11 +1,12 @@
 package main
 
 import (
+  "github.com/robfig/cron"
   "fmt"
-  "os/signal"
   "github.com/bwmarrin/discordgo"
   "errors"
-  "syscall"
+  "log"
+  "net/http"
   "os"
   scraper "Discord-Bot-CP-Spider/scraper"
 )
@@ -23,9 +24,23 @@ func getToken() (string, error) {
   return t, nil
 }
 
+func getPort() string {
+  p := os.Getenv("PORT")
+  if p != "" {
+    return ":" + p
+  }
+  return ":3000"
+}
+
 func main() {
+  c := cron.New()
   contests = scraper.Scrape()
+  c.AddFunc("@hourly", func() {
+    contests = scraper.Scrape()
+  })
+  c.Start()
   token, err := getToken()
+  port := getPort()
   if err != nil {
     fmt.Println(err.Error())
     return
@@ -45,10 +60,7 @@ func main() {
     return
   }
   fmt.Println("Bot is Running")
-  sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-  <-sc
-
+  log.Fatal(http.ListenAndServe(port, nil))
 }
 
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -56,13 +68,34 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
     return
   }
   if m.Content == "!schedule" {
-    message := ""
+    s.ChannelMessageSend(m.ChannelID, "**Here's Your Contests List:**")
     for _, body := range contests {
-      message = "(" + body.Status + ") " + body.Title + " " +  body.Link + "\n"
-      _, err := s.ChannelMessageSend(m.ChannelID, message)
-      if err != nil {
-        fmt.Println(err.Error())
+      var baseColor int
+      switch body.Status {
+        case "PAST":
+          baseColor = 16711680
+        case "RUNNING":
+          baseColor = 16776960
+        case "COMING":
+          baseColor = 65280
       }
+      embed := new(discordgo.MessageEmbed)
+      embed.URL = body.Link
+      embed.Color = baseColor
+      embed.Title = body.Title + "\n"
+      embed.Description = "**(" + body.Status + ")**"
+      inlineFields := []*discordgo.MessageEmbedField{
+        {Name: "Duration", Value: body.Duration, Inline: true},
+        {Name: "Time Left", Value: body.Timeleft, Inline: true},
+      }
+      embed.Fields = inlineFields
+      s.ChannelMessageSendEmbed(m.ChannelID, embed)
     }
+  } else if m.Content == "!help" {
+    commandList := "**Here's List of Commands:**\n\n"
+    commandList += "**1. !help (to see list of commands)**\n"
+    commandList += "**2. !schedule (to see contests list)**\n"
+    s.ChannelMessageSend(m.ChannelID, commandList)
   }
+
 }

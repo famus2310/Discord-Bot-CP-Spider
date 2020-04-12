@@ -34,6 +34,14 @@
   version = "v1.4.2"
 
 [[projects]]
+  digest = "1:32db15a47b5be06a5d40e863ab0ebed107741845fd2d8676121f788284d26923"
+  name = "github.com/robfig/cron"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ccba498c397bb90a9c84945bbb0f7af2d72b6309"
+  version = "v3.0.1"
+
+[[projects]]
   branch = "master"
   digest = "1:64a9d5955873d48bcb3221da0507b8fdfccb095c0b2d5e1f0162b72c70fb6445"
   name = "golang.org/x/crypto"
@@ -71,6 +79,7 @@
   input-imports = [
     "github.com/PuerkitoBio/goquery",
     "github.com/bwmarrin/discordgo",
+    "github.com/robfig/cron",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -25,6 +25,8 @@ type Contest struct {
   Title string
   Link string
   Status string
+  Duration string
+  Timeleft string
 }
 
 func Scrape() []Contest {
@@ -52,6 +54,8 @@ func Scrape() []Contest {
     } else {
       row.Status = ""
     }
+    row.Duration = sel.Find(".duration").Text()
+    row.Timeleft = sel.Find(".timeleft").Text()
     for _, val := range ContestSite {
       if row.Link != "#" && row.Link != "" && strings.Contains(row.Link, val) {
         contests = append(contests, *row)
