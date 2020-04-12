@@ -2,8 +2,10 @@ package main
 
 import (
   "fmt"
+  "os/signal"
   "github.com/bwmarrin/discordgo"
   "errors"
+  "syscall"
   "os"
   scraper "Discord-Bot-CP-Spider/scraper"
 )
@@ -44,6 +46,7 @@ func main() {
   }
   fmt.Println("Bot is Running")
   sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
   <-sc
 
 }
