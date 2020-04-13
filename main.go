@@ -35,10 +35,11 @@ func getPort() string {
 func main() {
   c := cron.New()
   contests = scraper.Scrape()
-  c.AddFunc("@hourly", func() {
+  c.AddFunc("0,30 * * * *", func() {
     contests = scraper.Scrape()
   })
   c.Start()
+  defer c.Stop()
   token, err := getToken()
   port := getPort()
   if err != nil {
